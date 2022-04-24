@@ -1,0 +1,8 @@
+Id,Name,Country,CurrentlyOperate
+1,Amsterdam,The Netherlands,True
+2,Berlin,Germany,True
+3,Copenhagen,Denmark,True
+4,Brussels,Belgium,True
+5,Milan,Italy,False
+6,London,UK,False
+7,Paris,France,False

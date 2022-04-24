@@ -1,0 +1,98 @@
+@model CheckBikeThefts.Web.Models.Home.IndexResponseModel
+
+@{
+    Layout = "_Layout";
+}
+
+@functions
+{
+    void WriteTable(IEnumerable<CheckBikeThefts.Web.Models.Home.IndexResponseModel.City> cities)
+    {
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">City</th>
+                <th scope="col">Country</th>
+                <th scope="col">Stolen Bikes</th>
+                <th scope="col"></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var city in cities)
+            {
+                <tr class="city-row" data-city-id="@city.Id">
+                    <td>@city.Name</td>
+                    <td>@city.Country</td>
+                    <td class="city-row-stolen-bikes"></td>
+                    <td>
+                        <button type="button" class="btn btn-primary city-row-refresh-stolen-bikes">Refresh</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+
+<h2>Currently Operate</h2>
+@{
+    WriteTable(Model.CurrentlyOperate);
+}
+<h2>Not Currently Operate</h2>
+@{
+    WriteTable(Model.NotCurrentlyOperate);
+}
+
+@section Scripts
+{
+    <script type="text/javascript">
+        $(function () {
+            function refreshStolenBikes(cityIds, force) {
+                function updateStolenBikesHtml(cityId, html) {
+                    $('.city-row[data-city-id="' + cityId + '"]').find('.city-row-stolen-bikes').html(html);
+                }
+                
+                function setLoading() {
+                    var template = $('#loading-template').html();
+                    cityIds.forEach(function (cityId) { updateStolenBikesHtml(cityId, template); });
+                }
+                
+                setLoading();
+                
+                $.ajax({
+                    url: '/stolenBike?' + cityIds.map(function (id) { return 'cityIds=' + id; }).join('&') + '&force=' + force,
+                    method: 'GET',
+                    contentType: 'application/json',
+                    cache: false,
+                    success: function (data) {
+                        data.cities.forEach(function(city) { updateStolenBikesHtml(city.cityId, city.stolenBikes); });
+                    },
+                    error: function () {
+                        cityIds.forEach(function (cityId) { updateStolenBikesHtml(cityId, ''); });
+                    }
+                });
+            }
+                    
+            var $rows = $('.city-row');
+
+            $rows.each(function () {
+                var $row = $(this);
+                $row.find('.city-row-refresh-stolen-bikes').click(function () {
+                    refreshStolenBikes([$row.data('city-id')], true);
+                });
+            });
+            
+            var cityIds = $rows.map(function () {
+              return $(this).data('city-id');  
+            }).toArray();
+            
+            refreshStolenBikes(cityIds, false);
+        });
+    </script>
+
+    <script id="loading-template" type="text/html">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </script>
+}
